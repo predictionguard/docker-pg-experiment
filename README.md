@@ -52,7 +52,7 @@ Neither gate alone is sufficient. Together, they enforce least-privilege at both
 The `pg-kit/` directory is a Docker Sandbox kit that packages the Prediction Guard provider configuration for OpenCode. Apply it with:
 
 ```bash
-sbx run --kit pg-kit/spec.yaml --name pg-opencode opencode
+sbx run --kit pg-kit/spec.yaml --name pg-opencode predictionguard
 ```
 
 This kit:
