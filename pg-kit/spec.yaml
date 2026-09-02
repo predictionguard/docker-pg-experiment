@@ -1,0 +1,18 @@
+schemaVersion: "2"
+kind: sandbox
+
+credentials:
+  - id: predictionguard_token
+    description: Prediction Guard API token
+    env: PREDICTIONGUARD_TOKEN
+    proxyManaged: true
+    hosts:
+      - pg.yourcompany.com
+
+network:
+  allowedDomains:
+    - pg.yourcompany.com
+
+files:
+  - source: files/home/agent/.config/opencode/opencode.jsonc
+    destination: /home/agent/.config/opencode/opencode.jsonc
