@@ -94,10 +94,20 @@ curl https://pg.yourcompany.com/v1/chat/completions \
 
 ## Prerequisites
 
-- macOS Sonoma 14+ (Apple Silicon)
-- Docker Desktop
-- Docker Sandbox CLI: `brew install docker/tap/sbx`
 - Prediction Guard deployment (self-hosted or cloud) with governance policies enabled
+- Docker Sandbox CLI (`sbx`) — standalone, no Docker Desktop required
+
+**macOS (Apple Silicon, Sonoma 14+)**
+```bash
+brew install docker/tap/sbx
+sbx login
+```
+
+**Linux / cloud VM**
+```bash
+curl -fsSL https://get.docker.com/sbx | sh
+sbx login
+```
 
 ---
 
