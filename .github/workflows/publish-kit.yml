@@ -1,0 +1,23 @@
+name: Publish PG sandbox kit to Docker Hub
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - pg-kit/**
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install sbx CLI
+        run: curl -fsSL https://get.docker.com/sbx | sh
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | sbx login --username sharanshirodkar07 --password-stdin
+
+      - name: Push kit to Docker Hub
+        run: sbx kit push ./pg-kit docker.io/predictionguard/sbx-predictionguard:latest
