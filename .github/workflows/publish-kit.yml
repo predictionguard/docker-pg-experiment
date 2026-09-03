@@ -44,4 +44,4 @@ jobs:
         run: sbx kit validate ./pg-kit
 
       - name: Push kit to Docker Hub
-        run: sbx kit push ./pg-kit docker.io/predictionguard/sbx-predictionguard:latest --sign
+        run: sbx kit push ./pg-kit docker.io/predictionguard/sbx-predictionguard:latest
