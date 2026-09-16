@@ -2,6 +2,35 @@
 
 Run AI coding agents (OpenCode) inside a [Docker Sandbox](https://docs.docker.com/ai/sandboxes/) with [Prediction Guard](https://predictionguard.com) as the model provider — network-isolated, credential-proxied, with prompt injection and PII protection built in.
 
+## How it works
+
+Two components. Both required.
+
+```
+┌─────────────────────────────────────────────┐     ┌──────────────────────────────────────┐
+│         Developer machine / cloud VM        │     │   Your infrastructure (self-hosted)  │
+│                                             │     │                                      │
+│  ┌──────────────────────────────────────┐   │     │  ┌────────────────────────────────┐  │
+│  │       Docker Sandbox (Gate 1)        │   │     │  │  Prediction Guard (Gate 2)     │  │
+│  │                                      │   │     │  │                                │  │
+│  │  ┌────────────────────────────────┐  │   │     │  │  • Prompt injection detection  │  │
+│  │  │     AI coding agent            │  │   │     │  │  • PII detection & redaction   │  │
+│  │  │     (OpenCode)                 │──┼───┼────▶│  │  • Toxicity policy             │  │
+│  │  └────────────────────────────────┘  │   │     │  │  • Model inventory & routing   │  │
+│  │                                      │   │     │  │  • Audit log                   │  │
+│  │  • Network: only pg.yourcompany.com  │   │     │  └────────────────────────────────┘  │
+│  │  • Credential proxy: key never       │   │     │                                      │
+│  │    enters the VM                     │   │     │         ┌──────────────┐             │
+│  │  • Filesystem: mounted workspace     │   │     │         │  LLM / Model │             │
+│  │    only                              │   │     │         └──────────────┘             │
+│  └──────────────────────────────────────┘   │     └──────────────────────────────────────┘
+└─────────────────────────────────────────────┘
+```
+
+**Gate 1 — Docker Sandbox** isolates the agent at runtime: network, filesystem, and credentials are locked down before the agent starts. The API key never enters the VM.
+
+**Gate 2 — Prediction Guard** governs every model call: prompt injection, PII, and content policy are enforced on live traffic before it reaches the model. Runs entirely inside your own infrastructure.
+
 ## Quick start
 
 Register your Prediction Guard API token once:
