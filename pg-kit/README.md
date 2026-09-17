@@ -50,6 +50,8 @@ sbx run --kit docker.io/predictionguard/sbx-predictionguard:latest predictiongua
 
 Replace `pg.yourcompany.com` with your Prediction Guard deployment URL.
 
+Need a Prediction Guard deployment? [Get your evaluation license →](https://predictionguard.com/docker-x-prediction-guard-evaluation-license)
+
 ## What this kit does
 
 - **Network isolation** — outbound traffic restricted to your Prediction Guard endpoint only; default deny for everything else
@@ -61,6 +63,12 @@ Replace `pg.yourcompany.com` with your Prediction Guard deployment URL.
 Docker Sandbox handles the runtime layer (what the agent can reach on the host and network). Prediction Guard handles the model layer (what content goes in and out of the AI). Neither gate alone is sufficient — together they enforce least-privilege at both layers.
 
 Read the full writeup: [Two Gates of Defense — predictionguard.com/blog](https://predictionguard.com/blog/two-gates-of-defense-running-ai-agents-safely-with-docker-sandbox-and-prediction-guard)
+
+## Meet us at WeAreDevelopers World Congress
+
+We will be at the Docker Pavilion, Sep 23-25, San Jose. Come see a live demo of both gates in action — Docker Sandbox + Prediction Guard running together.
+
+[Book time with us at the conference →](https://meetings.hubspot.com/steve1863/we-are-developers-conference)
 
 ## Source
 
