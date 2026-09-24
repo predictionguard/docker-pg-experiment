@@ -1,49 +1,85 @@
 # Two Gates of Defense: Docker Sandbox + Prediction Guard
 
-Reference implementation for the co-marketing integration between [Docker Sandbox](https://docs.docker.com/ai/sandboxes/) and [Prediction Guard](https://predictionguard.com).
+Reference implementation for integration between [Docker Sandbox](https://docs.docker.com/ai/sandboxes/) and [Prediction Guard](https://predictionguard.com).
 
-Read the full writeup: [Two Gates of Defense — predictionguard.com/blog](https://predictionguard.com/blog/two-gates-of-defense-running-ai-agents-safely-with-docker-sandbox-and-prediction-guard)
+Read the full writeup on the combined solution: [Two Gates of Defense — predictionguard.com/blog](https://predictionguard.com/blog/two-gates-of-defense-running-ai-agents-safely-with-docker-sandbox-and-prediction-guard)
 
 ---
 
 ## The problem
 
-AI coding agents — OpenCode, Hermes Agent, and others — run as processes with access to everything on the host machine: SSH keys, environment files, credentials, source code across all projects. A single prompt injection can weaponize that access.
+Most conversations about controlling AI agents focus on the models and input/output guardrails associated with those models (e.g., preventing prompt injections or masking PII). Although the model(s) are an important part of the supply chain of an agent, they are only a small piece of a much larger puzzle. To comprehensively govern the behavior of an agent, one needs to: (1) control the local runtime environment where the agent "harness" operates; and (2) manage the full supply chain of models, MCP servers, and tools powering agent behavior; and (3) control the agent's behavior as it operates on that distributed supply chain (and potentially interacts with other agents in a fleet).
 
-Model-layer governance (Prediction Guard) catches malicious instructions before they reach the model. But it cannot control what the agent process does on the host after a response is generated.
+Once you deploy an AI coding agent (Hermes Agent, Open Code, or any autonomous harness) on a developer's laptop or a cloud VM, that agent runtime can reach everything on that machine (such as SSH keys, config files, database credentials, other running services, and any API endpoint on the internet). The model doesn't matter if the agent can exfiltrate data through a path that bypasses model content filters entirely.
 
-Runtime isolation (Docker Sandbox) restricts what the agent can reach at the OS level — filesystem paths, network endpoints, installed tools. But it cannot inspect or govern the content of AI conversations.
+This is the gap that a single layer of defense can't fill, and this is why Prediction Guard has partnered with Docker's DVP agentic program to provide "two gates of defense."
 
-Neither gate alone is sufficient. Together, they enforce least-privilege at both layers.
+**Gate #1: Docker Sandbox (SBX).** This SBX "kit" isolates the local runtime layer. The agent harness runs inside a microVM sandbox with its own kernel, filesystem, and network stack. It is locked down to only those resources that are explicitly allowed (least agency). 
+
+**Gate #2: Prediction Guard (PG).** This "control plane" manages and controls the supply chain of allowed resources (models and tools) and how the agent behaves as it operates on those resources. Every agent action (and traces of agent behavior over time) are analyzed in real time to enforce: (a) proper agent scoping to only certain MCP servers, tools within MCP servers, and model endpoints; (b) agent behavioral controls bound to the agent's identity protecting against risks such as memory poisoning, tool misuse, runaway token use, and privilege escalation; and (c) component input and output policies for how PII, injections, and other potentially harmful context is handled in API handshakes. 
 
 ---
 
 ## Architecture
 
 ```
-[Developer machine / cloud VM]
-└── Docker SBX microVM (runtime isolation)
-    ├── AI agent (OpenCode or Hermes Agent)
-    │   └── All AI calls → Prediction Guard control plane
-    │       ├── Prompt injection detection
-    │       ├── Toxicity + PII policies
-    │       └── Model inventory + governance
-    ├── Network policy: only pg.yourcompany.com allowed outbound
-    ├── Filesystem policy: only mounted workspace directories accessible
-    └── Credential proxy: API key never enters the VM
+┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
+│ Docker SBX (Gate 1)  │  │ Docker SBX (Gate 1)  │  │ Docker SBX (Gate 1)  │
+│ • egress: PG only    │  │ • egress: PG only    │  │ • egress: PG only    │
+│ • creds: proxied     │  │ • creds: proxied     │  │ • creds: proxied     │
+│ • fs: workspace only │  │ • fs: workspace only │  │ • fs: workspace only │
+│ • no pkg installs    │  │ • no pkg installs    │  │ • no pkg installs    │
+│ ┌──────────────────┐ │  │ ┌──────────────────┐ │  │ ┌──────────────────┐ │
+│ │ Agent 1          │ │  │ │ Agent 2          │ │  │ │ Agent N          │ │
+│ │ (OpenCode)       │ │  │ │ (Hermes)         │ │  │ │ (any harness)    │ │
+│ └────────┬─────────┘ │  │ └────────┬─────────┘ │  │ └────────┬─────────┘ │
+└──────────┼───────────┘  └──────────┼───────────┘  └──────────┼───────────┘
+           │                         │                         │
+           └─────────────────────────┼─────────────────────────┘
+                                     │  (only reachable endpoint)
+                                     ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  Self-hosted Prediction Guard control plane (Gate 2)                     │
+│                                                                          │
+│  • Model endpoint, MCP server & tool scoping                             │
+│  • Agent tracing bound to unique agent identities                        │
+│  • Immutable audit logs                                                  │
+│  • Component input/output policy enforcement (prompt injection,          │
+│    toxicity, PII processing, etc.)                                       │
+│  • Behavioral controls tied to agent identity (privilege                 │
+│    escalation, tool misuse, memory poisoning, runaway token use)         │
+│  • Agent kill switches                                                   │
+│  • AIBOM export in CycloneDX format (with supply chain risks)            │
+│  • Human-in-the-loop approvals for tool access                           │
+│  • AI security events with SIEM integration                              │
+│                                                                          │
+└───────┬───────────────────┬───────────────────┬───────────────────┬──────┘
+        │                   │                   │                   │
+        ▼                   ▼                   ▼                   ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│ Model 1      │    │ Model N      │    │ MCP server 1 │    │ MCP server N │
+└──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
 ```
 
-**Gate 1 — Docker Sandbox (runtime layer)**
-- MicroVM with isolated filesystem, network, and Docker daemon
-- Credential proxy intercepts outbound calls and injects the real API key at the network layer — the key never lives inside the VM
-- Network policy enforces allow-list: only the Prediction Guard endpoint passes through
-- Filesystem policy controls which host directories can be mounted as a workspace
+In terms of the responsibility of each layer:
 
-**Gate 2 — Prediction Guard (model layer)**
-- Prompt injection detection blocks malicious instructions before they reach the model
-- Toxicity and PII policies govern every conversation
-- Unified model inventory across self-hosted and cloud models
-- Fully self-hosted: runs inside your infrastructure, no external service calls
+| Gate #1: Docker Verified Prediction Guard SBX Sandbox | Gate #2: Self-hosted Prediction Guard Control Plane |
+|---|---|
+| MicroVM runtime isolation (own kernel, filesystem, network stack) | — |
+| Default-deny egress, with only the Prediction Guard API allowed | — |
+| Host credential proxy, so the Prediction Guard API keys never enters the sandbox | — |
+| Filesystem isolation to the mounted workspace only | — |
+| Read-only host source via clone mode | — |
+| Blocks package installs and capability expansion | — |
+| Org-wide filesystem/network policy sync (Docker Business) | — |
+| — | Scoping of model endpoints, MCP servers, and individual tools |
+| — | Agent tracing bound to unique agent identities, immutable audit logs |
+| — | Component input/ output policy enforcement (for prompt injection, toxicity blocking, PII processing, etc.) |
+| — | Behavioral controls tied to agent identity (privilege escalation, tool misuse, memory poisoning, runaway token use) |
+| — | Agent kill switches |
+| — | AIBOM export in CycloneDX format (with identified supply chain risks) |
+| — | Configure human-in-the-loop approvals for tool access |
+| — | AI security events with SIEM integration |
 
 ---
 
