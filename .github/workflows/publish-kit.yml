@@ -46,8 +46,12 @@ jobs:
         run: |
           echo "$DOCKERHUB_TOKEN" | sbx login --username sharanshirodkar07 --password-stdin
 
-      - name: Validate kit
-        run: sbx kit validate ./pg-kit
+      - name: Validate kit descriptor
+        uses: docker/build-push-action@v6
+        with:
+          context: ./pg-kit
+          file: ./pg-kit/predictionguard.dockerfile
+          outputs: type=cacheonly
 
       - name: Push kit to Docker Hub
         run: sbx kit push ./pg-kit docker.io/predictionguard/sbx-predictionguard:latest
