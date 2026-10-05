@@ -85,33 +85,26 @@ In terms of the responsibility of each layer:
 
 ## Sandbox kit
 
-The `pg-kit/` directory is a Docker Sandbox kit that packages the Prediction Guard provider configuration for OpenCode. Apply it with:
+The `pg-kit/` directory is a v3 Docker Sandbox **mixin** kit. Unlike a workload kit, it is agent-agnostic -- compose it onto any agent (Claude Code, Hermes, OpenCode) with `--kit`:
 
 ```bash
-sbx run --kit pg-kit/spec.yaml --name pg-opencode predictionguard
+# Register your Prediction Guard API token once
+sbx secret set predictionguard
+
+# Compose onto any agent workload
+sbx run docker/claude-code \
+  --kit docker.io/predictionguard/sbx-predictionguard:latest \
+  --kit-arg pgHost=pg.yourcompany.com \
+  .
 ```
 
 This kit:
 - Injects `PREDICTIONGUARD_TOKEN` via the credential proxy (key stays on the host)
-- Restricts outbound network to `pg.yourcompany.com`
-- Drops the OpenCode provider config into the sandbox at startup
+- Restricts outbound network to the configured `pgHost` only
+- Writes `PG_BASE_URL` into the agent environment at install time
+- Injects an `AGENTS.md` explaining PG routing into every agent session
 
-Before running, register your Prediction Guard API token as a sandbox secret:
-
-```bash
-echo "$PREDICTIONGUARD_TOKEN" | sbx secret set-custom -g \
-  --host pg.yourcompany.com \
-  --env PREDICTIONGUARD_TOKEN \
-  --placeholder sk-pg-placeholder
-```
-
-And allow the Prediction Guard endpoint:
-
-```bash
-sbx policy allow network "pg.yourcompany.com"
-```
-
-Replace `pg.yourcompany.com` with your Prediction Guard deployment URL throughout.
+Replace `pg.yourcompany.com` with your Prediction Guard deployment URL.
 
 ---
 
@@ -152,3 +145,4 @@ sbx login
 - [Prediction Guard docs](https://docs.predictionguard.com)
 - [Docker Sandbox docs](https://docs.docker.com/ai/sandboxes/)
 - [sbx-kits-contrib](https://github.com/docker/sbx-kits-contrib) — community sandbox kits
+- [Prediction Guard joins Docker Verified Publisher Program](https://predictionguard.com/news/prediction-guard-joins-docker-verified-publisher-program-and-releases-governed-agent-kit-on-docker-hub)
