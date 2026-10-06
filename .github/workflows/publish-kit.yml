@@ -17,22 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install sbx CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # get.docker.com/sbx 403s on CI runners; install the latest published .deb instead
-          gh release download \
-            --repo docker/sbx-releases \
-            --pattern 'DockerSandboxes-linux-amd64-ubuntu2404.deb' \
-            --output /tmp/docker-sandboxes.deb
-          sudo apt-get install -y /tmp/docker-sandboxes.deb
-          sbx version
-
-      - name: Install oras
-        run: |
-          curl -fsSL https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz | tar -xz oras
-          sudo mv oras /usr/local/bin/
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -40,21 +26,14 @@ jobs:
           username: sharanshirodkar07
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Log in to Docker Hub (sbx credential store)
-        env:
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          echo "$DOCKERHUB_TOKEN" | sbx login --username sharanshirodkar07 --password-stdin
-
-      - name: Validate kit descriptor
+      - name: Build and push kit image
         uses: docker/build-push-action@v6
         with:
           context: ./pg-kit
           file: ./pg-kit/predictionguard.dockerfile
-          outputs: type=cacheonly
-
-      - name: Push kit to Docker Hub
-        run: sbx kit push ./pg-kit docker.io/predictionguard/sbx-predictionguard:latest
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: docker.io/predictionguard/sbx-predictionguard:latest
 
       - name: Update Docker Hub README
         env:
