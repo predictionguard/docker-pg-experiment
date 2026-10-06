@@ -39,12 +39,8 @@ jobs:
         env:
           DOCKERHUB_PAT: ${{ secrets.DOCKERHUB_PAT }}
         run: |
-          token=$(curl -s -X POST https://hub.docker.com/v2/users/login \
-            -H "Content-Type: application/json" \
-            -d "{\"username\":\"sharanshirodkar07\",\"password\":\"$DOCKERHUB_PAT\"}" \
-            | jq -r .token)
           curl -s -f -X PATCH https://hub.docker.com/v2/repositories/predictionguard/sbx-predictionguard/ \
-            -H "Authorization: Bearer $token" \
+            -H "Authorization: Bearer $DOCKERHUB_PAT" \
             -H "Content-Type: application/json" \
             -d "{\"full_description\": $(jq -Rs . < pg-kit/README.md)}" \
             && echo "Docker Hub README updated" || echo "Failed to update README"
