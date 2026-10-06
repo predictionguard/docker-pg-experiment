@@ -39,9 +39,13 @@ jobs:
         env:
           DOCKERHUB_PAT: ${{ secrets.DOCKERHUB_PAT }}
         run: |
+          token=$(curl -s -X POST https://hub.docker.com/v2/auth/token \
+            -H "Content-Type: application/json" \
+            -d "{\"identifier\":\"sharanshirodkar07\",\"secret\":\"$DOCKERHUB_PAT\"}" \
+            | jq -r .access_token)
           response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X PATCH \
             https://hub.docker.com/v2/repositories/predictionguard/sbx-predictionguard/ \
-            -H "Authorization: Bearer $DOCKERHUB_PAT" \
+            -H "Authorization: Bearer $token" \
             -H "Content-Type: application/json" \
             -d "{\"full_description\": $(jq -Rs . < pg-kit/README.md)}")
           echo "$response"
