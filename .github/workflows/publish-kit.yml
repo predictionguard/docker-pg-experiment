@@ -38,6 +38,7 @@ jobs:
       - name: Update Docker Hub README
         env:
           DOCKERHUB_PAT: ${{ secrets.DOCKERHUB_PAT }}
+          SHORT_DESCRIPTION: "Docker Sandbox kit for Prediction Guard: operational control of every action your AI agents take."
         run: |
           token=$(curl -s -X POST https://hub.docker.com/v2/auth/token \
             -H "Content-Type: application/json" \
@@ -47,6 +48,6 @@ jobs:
             https://hub.docker.com/v2/repositories/predictionguard/sbx-predictionguard/ \
             -H "Authorization: Bearer $token" \
             -H "Content-Type: application/json" \
-            -d "{\"full_description\": $(jq -Rs . < pg-kit/README.md)}")
+            -d "$(jq -n --rawfile full pg-kit/README.md --arg short "$SHORT_DESCRIPTION" '{description: $short, full_description: $full}')")
           echo "$response"
           echo "$response" | grep -q "HTTP_STATUS:20" && echo "Docker Hub README updated" || echo "Failed to update README"

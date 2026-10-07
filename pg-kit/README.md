@@ -1,6 +1,6 @@
 # Prediction Guard + Docker SBX
 
-Run autonomous agents (OpenCode, Hermes, etc.) inside the Prediction Guard Docker verified sandbox. Maintain least agency for these agents and limit the blast radius by restricting network access to an instance of the [Prediction Guard](https://predictionguard.com) control plane. 
+Run autonomous agents (Claude Code, OpenCode, Hermes, etc.) inside the Prediction Guard Docker verified sandbox, with operational control of every action they take. Maintain least agency and limit the blast radius by restricting network access to your self-hosted [Prediction Guard](https://predictionguard.com) sovereign AI control plane. 
 
 The Prediction Guard control plane allows you to manage the supply chain on which the agents operate, scope model & tool access, and enforce agent behavioral controls. The Docker sandbox ensures that there is not a workaround to this scoping and the Prediction Guard controls. 
 
@@ -24,7 +24,7 @@ Ensure "two gates of defense" for autonomous agents:
 | Blocks package installs and capability expansion | — |
 | Org-wide filesystem/network policy sync (Docker Business) | — |
 | — | Scoping of model endpoints, MCP servers, and individual tools |
-| — | Agent tracing bound to unique agent identities, immutable audit logs |
+| — | Agent tracing bound to unique agent identities, Immutable Audit Log |
 | — | Component input/ output policy enforcement (for prompt injection, toxicity blocking, PII processing, etc.) |
 | — | Behavioral controls tied to agent identity (privilege escalation, tool misuse, memory poisoning, runaway token use) |
 | — | Agent kill switches |
@@ -57,7 +57,7 @@ Architecturally, this provides a pathway to run autonomous agents at scale witho
 │                                                                          │
 │  • Model endpoint, MCP server & tool scoping                             │
 │  • Agent tracing bound to unique agent identities                        │
-│  • Immutable audit logs                                                  │
+│  • Immutable Audit Log                                                   │
 │  • Component input/output policy enforcement (prompt injection,          │
 │    toxicity, PII processing, etc.)                                       │
 │  • Behavioral controls tied to agent identity (privilege                 │
@@ -122,3 +122,4 @@ Need a Prediction Guard deployment? [Get your evaluation license →](https://pr
 - [Two Gates of Defense — predictionguard.com/blog](https://predictionguard.com/blog/two-gates-of-defense-running-ai-agents-safely-with-docker-sandbox-and-prediction-guard)
 - [Prediction Guard joins Docker Verified Publisher Program](https://predictionguard.com/news/prediction-guard-joins-docker-verified-publisher-program-and-releases-governed-agent-kit-on-docker-hub)
 - [Source — github.com/predictionguard/docker-pg-experiment](https://github.com/predictionguard/docker-pg-experiment)
+
